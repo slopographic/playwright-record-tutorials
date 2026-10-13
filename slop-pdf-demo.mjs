@@ -56,11 +56,43 @@ await ctx.addInitScript(() => {
 });
 const page = await ctx.newPage();
 
+// ---- pointer motion -------------------------------------------------------------
+// Every move follows a cubic Bezier curve with a gentle arc, timed with an ease-in-out curve, so the pointer never jumps.
+let pos = { x: 960, y: 540 };
+const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const bez = (a, b, c, d, t) => {
+  const u = 1 - t;
+  return { x: u * u * u * a.x + 3 * u * u * t * b.x + 3 * u * t * t * c.x + t * t * t * d.x,
+           y: u * u * u * a.y + 3 * u * u * t * b.y + 3 * u * t * t * c.y + t * t * t * d.y };
+};
+const rnd = (lo, hi) => lo + Math.random() * (hi - lo);
+async function moveTo(x, y, { arc = true } = {}) {
+  const p0 = { ...pos }, p3 = { x, y };
+  const dx = x - p0.x, dy = y - p0.y, dist = Math.hypot(dx, dy);
+  if (dist < 1) return;
+  const dur = Math.min(1100, Math.max(600, 600 + dist * 0.35));
+  const nx = -dy / dist, ny = dx / dist;
+  const side = Math.random() < 0.5 ? -1 : 1;
+  const o1 = arc ? side * Math.min(170, rnd(0.10, 0.22) * dist) : 0;
+  const o2 = arc ? side * Math.min(120, rnd(0.06, 0.16) * dist) : 0;
+  const p1 = { x: p0.x + dx * 0.3 + nx * o1, y: p0.y + dy * 0.3 + ny * o1 };
+  const p2 = { x: p0.x + dx * 0.7 + nx * o2, y: p0.y + dy * 0.7 + ny * o2 };
+  const n = Math.max(2, Math.round((dur * 60) / 1000));
+  const t0 = Date.now();
+  for (let i = 1; i <= n; i++) {
+    const p = i === n ? p3 : bez(p0, p1, p2, p3, easeInOutCubic(i / n));
+    await page.mouse.move(p.x, p.y);
+    const wait = t0 + (i * dur) / n - Date.now();
+    if (wait > 0) await sleep(wait);
+  }
+  pos = p3;
+}
+
 // Move the pointer in a smooth curve: many small steps, so the motion looks natural on screen.
 async function glide(locator) {
   const box = await locator.first().boundingBox();
   if (!box) throw new Error('no box for target');
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 40 });
+  await moveTo(box.x + box.width / 2, box.y + box.height / 2);
   await sleep(250);
 }
 async function click(locator) {
@@ -97,7 +129,7 @@ await page.keyboard.press('Enter');
 await page.waitForFunction(() => document.getElementById('app').dataset.mode === 'page', null, { timeout: 15000 });
 await sleep(PAUSE);
 const viewer = await page.locator('#viewer').boundingBox();
-await page.mouse.move(viewer.x + viewer.width / 2, viewer.y + viewer.height * 0.3, { steps: 30 });
+await moveTo(viewer.x + viewer.width / 2, viewer.y + viewer.height * 0.3);
 
 await sleep(PAUSE);
 
@@ -109,9 +141,9 @@ const line = await page.evaluate((c) => {
   return { x1: r.left + 2, x2: r.right - 2, y: r.top + r.height / 2 };
 }, LINE);
 if (!line) throw new Error(`line "${LINE}" not found on the page`);
-await page.mouse.move(line.x1, line.y, { steps: 30 });
+await moveTo(line.x1, line.y);
 await page.mouse.down();
-await page.mouse.move(line.x2, line.y, { steps: 60 });
+await moveTo(line.x2, line.y, { arc: false });
 await page.mouse.up();
 await page.locator('.selbar-btn[data-act="highlight"]').first().waitFor({ state: 'visible', timeout: 10000 });
 await sleep(600);
@@ -123,7 +155,7 @@ await page.keyboard.press('Control+e');
 await sleep(800);
 const word = await wordBox(WORD_CONTEXT, WORD);
 if (!word) throw new Error(`word "${WORD}" not found`);
-await page.mouse.move(word.x, word.y, { steps: 30 });
+await moveTo(word.x, word.y);
 await page.mouse.dblclick(word.x, word.y);
 const runInput = page.locator('.edit-run');
 await runInput.waitFor({ state: 'visible', timeout: 10000 });
@@ -172,7 +204,7 @@ await glide(thumbs.nth(0));
 await page.mouse.down();
 await sleep(150);
 const target = await thumbs.nth(1).boundingBox();
-await page.mouse.move(target.x + target.width * 0.8, target.y + target.height / 2, { steps: 50 });
+await moveTo(target.x + target.width * 0.8, target.y + target.height / 2);
 await sleep(400);
 await page.mouse.up();
 await page.waitForFunction(() => !document.body.classList.contains('is-dragging'), null, { timeout: 5000 });
@@ -186,9 +218,9 @@ await page.waitForFunction(() => document.getElementById('app').dataset.mode ===
 await sleep(PAUSE);
 const tries = await wordBox('persists', 'persists');
 if (!tries) throw new Error('word "persists" not found for redaction');
-await page.mouse.move(tries.x1, tries.y, { steps: 30 });
+await moveTo(tries.x1, tries.y);
 await page.mouse.down();
-await page.mouse.move(tries.x2, tries.y, { steps: 40 });
+await moveTo(tries.x2, tries.y, { arc: false });
 await page.mouse.up();
 await sleep(900);
 await click(page.locator('.selbar-btn[data-act="redact"]').first());

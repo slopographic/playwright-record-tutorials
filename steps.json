@@ -1,0 +1,66 @@
+{
+  "video": "slop-pdf-walkthrough.mp4",
+  "width": 1920,
+  "height": 1080,
+  "fps": 30,
+  "durationSeconds": 186.9,
+  "note": "start = seconds from the start of the video",
+  "steps": [
+    {
+      "id": "1",
+      "title": "Open Slop PDF. Nothing is uploaded, and the file never leaves your device.",
+      "start": 5.6
+    },
+    {
+      "id": "2",
+      "title": "Open the sample PDF",
+      "start": 14.4
+    },
+    {
+      "id": "3",
+      "title": "Open a page and zoom in",
+      "start": 19.2
+    },
+    {
+      "id": "4",
+      "title": "Select a line of text and press Highlight",
+      "start": 39.4
+    },
+    {
+      "id": "5",
+      "title": "Edit text: double-click a word, type a new one, press Enter",
+      "start": 57.7
+    },
+    {
+      "id": "6",
+      "title": "Open the Fonts panel from the top bar",
+      "start": 69
+    },
+    {
+      "id": "7",
+      "title": "Open Convert: Word, Excel and PowerPoint",
+      "start": 76.6
+    },
+    {
+      "id": "8",
+      "title": "The Tools rail: open OCR",
+      "start": 101.1
+    },
+    {
+      "id": "9",
+      "title": "Open the Layers panel",
+      "start": 110.7
+    },
+    {
+      "id": "10",
+      "title": "Organize: drag a page to a new position",
+      "start": 121
+    },
+    {
+      "id": "11",
+      "title": "Redact a word: Redact in the selection bar, then Apply redactions",
+      "start": 144
+    }
+  ],
+  "outroStart": 181.7
+}
