@@ -1,0 +1,10 @@
+{
+  "name": "slop-pdf-recorder",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Records the Slop PDF walkthrough in a visible browser on a virtual screen.",
+  "type": "module",
+  "dependencies": {
+    "playwright": "1.55.0"
+  }
+}
