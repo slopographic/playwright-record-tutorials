@@ -30,6 +30,30 @@ const step = (n, title) => console.log(`step ${n}: ${title}`);
 // CHROME_PATH is optional: set it to a Chrome or Chromium binary to use that instead of Playwright's own.
 const browser = await chromium.launch({ headless: false, executablePath: process.env.CHROME_PATH || undefined, args: ['--start-maximized'] });
 const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 }, screen: { width: 1920, height: 1080 }, acceptDownloads: false });
+// A visible pointer for the recording (the screen recorder does not always draw the system cursor):
+// a lime dot (Sloppo's green) that darkens on press, with a ripple on each click.
+await ctx.addInitScript(() => {
+  const css = (el, o) => Object.assign(el.style, o);
+  const mount = () => {
+    const dot = document.createElement('div');
+    css(dot, { position: 'fixed', left: '0', top: '0', width: '22px', height: '22px', marginLeft: '-11px', marginTop: '-11px',
+      borderRadius: '50%', background: 'rgba(212,255,58,0.95)', border: '2px solid #0a0a0a', boxShadow: '0 2px 8px rgba(0,0,0,.35)',
+      pointerEvents: 'none', zIndex: '2147483647', transform: 'translate(-200px,-200px)' });
+    document.documentElement.appendChild(dot);
+    addEventListener('mousemove', (e) => { dot.style.transform = 'translate(' + e.clientX + 'px,' + e.clientY + 'px)'; }, true);
+    addEventListener('mousedown', (e) => {
+      css(dot, { background: 'rgba(160,220,0,0.98)', width: '30px', height: '30px', marginLeft: '-15px', marginTop: '-15px' });
+      const r = document.createElement('div');
+      css(r, { position: 'fixed', left: e.clientX + 'px', top: e.clientY + 'px', width: '44px', height: '44px', marginLeft: '-22px', marginTop: '-22px',
+        boxSizing: 'border-box', borderRadius: '50%', border: '3px solid rgba(212,255,58,0.95)', pointerEvents: 'none', zIndex: '2147483646' });
+      document.documentElement.appendChild(r);
+      r.animate([{ transform: 'scale(0.4)', opacity: 1 }, { transform: 'scale(1.6)', opacity: 0 }], { duration: 450, easing: 'ease-out' })
+        .onfinish = () => r.remove();
+    }, true);
+    addEventListener('mouseup', () => { css(dot, { background: 'rgba(212,255,58,0.95)', width: '22px', height: '22px', marginLeft: '-11px', marginTop: '-11px' }); }, true);
+  };
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', mount) : mount();
+});
 const page = await ctx.newPage();
 
 // Move the pointer in a smooth curve: many small steps, so the motion looks natural on screen.
